@@ -13,11 +13,12 @@ import multiprocessing as mp
 import matplotlib.pyplot as plt
 import PIL.ImageFont as ImageFont
 
-font_fname = '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'
+font_fname = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
 font_size = 30
 font = ImageFont.truetype(font_fname, font_size)
-DEFAULT_CONFIDENCE_THRESHOLD = 40
-
+DEFAULT_CONFIDENCE_THRESHOLD = 10
+DEFAULT_DELIMITER = '+'
+delimiter = DEFAULT_DELIMITER
 
 def parse_input():
     parser = argparse.ArgumentParser()
@@ -29,16 +30,19 @@ def parse_input():
     parser.add_argument("-w", "--num_workers", type=int,
                         help="Number of worker processes. "
                              "Default sets the number of worker processes to the number of CPU processes.")
+    parser.add_argument("--delimiter", help="This character will be used to concat the OCR results"
+                        , default=DEFAULT_DELIMITER)
 
     args = parser.parse_args()
     return args
 
 
 def check_paths(args):
+    global delimiter
     if args.slide_paths and os.path.exists(args.slide_paths):
         slide_paths = args.slide_paths
     else:
-        raise ValueError(f'{args.dir_location} does not exist or it is not accessible!')
+        raise ValueError(f'{args.slide_paths} does not exist or it is not accessible!')
 
     if args.confidence_threshold:
         if 0 <= args.confidence_threshold <= 100:
@@ -63,6 +67,8 @@ def check_paths(args):
     else:
         n_process = psutil.cpu_count()
 
+    delimiter = args.delimiter
+
     print("--------------------------------------------------")
     print("Running labelOCR with parameters:")
     print(f"Slide  Directory:  {slide_paths}")
@@ -84,7 +90,7 @@ def get_slide_paths(rootpath, extensions=['tiff', 'tif', 'svs', 'scn']):
     return paths
 
 def read_label(slide_path, label_dir, confidence_threshold, send_end):
-    try:
+    # try:
         # Open image
         originalImage = osi.OpenSlide(slide_path)
         # Extract label
@@ -94,24 +100,25 @@ def read_label(slide_path, label_dir, confidence_threshold, send_end):
         # Rotate image to right orientation, changing image dimensions
         bwLabelImage = bwLabelImage.rotate(-90, expand=1)
         # Save Label
-        data = pytesseract.image_to_data(bwLabelImage, output_type=pytesseract.Output.DICT, lang="xyz")
+        data = pytesseract.image_to_data(bwLabelImage, output_type=pytesseract.Output.DICT, lang="Impact")
         ocr_result = ""
         for te, conf in zip(data['text'], data['conf']):
             te.replace("'", "")
             if len(te) > 1 and conf > confidence_threshold:
-                ocr_result += te + "+"
+                ocr_result += te + delimiter
 
         draw = ImageDraw.Draw(bwLabelImage)
         w, h = font.getsize(ocr_result)
         draw.rectangle((0, 0, w, h), fill='white')
         draw.text((0, 0), ocr_result[:-1], font=font, fill='rgb(0, 0, 0)')
-
+        if len(ocr_result)< 2 :
+            ocr_result = os.path.split(slide_path)[-1]+" "
         label = os.path.join(label_dir, ocr_result[:-1] + ".png")
         bwLabelImage.save(label)
         send_end.send((slide_path, ocr_result))
 
-    except Exception as e:
-        print(f"could not process f{slide_path}\n{e}")
+    # except Exception as e:
+    #     print(f"could not process f{slide_path}\n{e}")
 
 
 # ---------------------------- Main function: ----------------------------
@@ -143,11 +150,13 @@ def main():
             processes.append(p)
         for p in processes:
             p.join()
+
         results_to_write.extend(map(lambda x: x.recv(), recv_end_list))
+
 
     output_file_path = os.path.join(output_file_location, str_time + '_OCR.csv')
     output_file = open(output_file_path, "w")
-    output_file.write("path", "ocr_result\n")
+    output_file.write("path,ocr_result\n")
     output_file.write("\n".join([f"{path},{ocr_result}" for path, ocr_result in results_to_write]))
     output_file.close()
 

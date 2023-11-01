@@ -10,3 +10,5 @@ crop_patches/tests/mock/
 submodule_cv/
 submodule_utils/
 .idea/
+Label/
+Results/

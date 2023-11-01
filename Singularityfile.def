@@ -34,9 +34,9 @@ From: debian:10
     pip install opencv-python
     pip install openslide-python
     pip install pytesseract
-    
-    #List installed environments
-    conda list
+
+%files
+    train/output/Impact.traineddata /usr/share/tesseract-ocr/4.00/tessdata/
 
 %runscript
     python ocr.py $*
