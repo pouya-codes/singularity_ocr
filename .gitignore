@@ -2,6 +2,7 @@
 *.simg
 *.pyc
 __pycache__/
+Dataset/
 .vscode
 .pytest_cache
 crop_patches/tests/outputs/
