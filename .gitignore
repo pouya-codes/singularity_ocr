@@ -1,0 +1,11 @@
+*.sif
+*.simg
+*.pyc
+__pycache__/
+.vscode
+.pytest_cache
+crop_patches/tests/outputs/
+crop_patches/tests/mock/
+submodule_cv/
+submodule_utils/
+.idea/
