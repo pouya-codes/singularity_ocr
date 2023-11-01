@@ -16,7 +16,8 @@ From: debian:10
     git \
     libtesseract-dev\
     tesseract-ocr\
-    openslide-tools
+    openslide-tools \
+    libgl1-mesa-glx
     rm -rf /var/lib/apt/lists/*
     apt-get clean
 
