@@ -122,6 +122,7 @@ def read_label(slide_path, label_dir, confidence_threshold, send_end):
 
     except Exception as e:
         print(f"could not process {slide_path}\n{e}")
+        send_end.send((slide_path, ""))
 
 
 # ---------------------------- Main function: ----------------------------
