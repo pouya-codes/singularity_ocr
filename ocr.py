@@ -114,6 +114,8 @@ def read_label(slide_path, label_dir, confidence_threshold, send_end):
         if len(ocr_result)< 2 :
             ocr_result = os.path.split(slide_path)[-1]+" "
         label = os.path.join(label_dir, ocr_result[:-1] + ".png")
+        if os.path.exists(label):
+            label = label[:-4] + os.path.basename(slide_path).split('.')[0] + ".png"
         bwLabelImage.save(label)
         send_end.send((slide_path, ocr_result))
 
