@@ -90,7 +90,7 @@ def get_slide_paths(rootpath, extensions=['tiff', 'tif', 'svs', 'scn']):
     return paths
 
 def read_label(slide_path, label_dir, confidence_threshold, send_end):
-    # try:
+    try:
         # Open image
         originalImage = osi.OpenSlide(slide_path)
         # Extract label
@@ -113,14 +113,15 @@ def read_label(slide_path, label_dir, confidence_threshold, send_end):
         draw.text((0, 0), ocr_result[:-1], font=font, fill='rgb(0, 0, 0)')
         if len(ocr_result)< 2 :
             ocr_result = os.path.split(slide_path)[-1]+" "
+        ocr_result = os.path.basename(slide_path).split('.')[0] + "|~|~|" + " ".join(ocr_result.split()).replace('/','-')
         label = os.path.join(label_dir, ocr_result[:-1] + ".png")
-        if os.path.exists(label):
-            label = label[:-4] + os.path.basename(slide_path).split('.')[0] + ".png"
+        # if os.path.exists(label):
+            # label = label[:-4] + os.path.basename(slide_path).split('.')[0] + ".png"
         bwLabelImage.save(label)
         send_end.send((slide_path, ocr_result))
 
-    # except Exception as e:
-    #     print(f"could not process f{slide_path}\n{e}")
+    except Exception as e:
+        print(f"could not process {slide_path}\n{e}")
 
 
 # ---------------------------- Main function: ----------------------------
